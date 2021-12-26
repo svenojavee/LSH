@@ -33,15 +33,19 @@ newFormula <- function(h2Obs,K){
 }
 
 
+classicFormula(0.091668,0.05,0.0375)
+newFormula(0.091668,0.0375)
+
 #M <- 10000
-N <- 25000
+N <- 20000
 
 tmp1 <- function(sigG,sigE){
   return(sigG/(sigG+sigE))
 }
 
 
-simulateFunction_SNP <- function(dataSet, h2, N, K, P) {
+simulateFunction_SNP <- function(dataSet, h2, N, K, P,seedUse) {
+  set.seed(seedUse)
   NTilde <- nrow(dataSet)
   M <- ncol(dataSet)
     
@@ -83,14 +87,14 @@ simulateFunction_SNP <- function(dataSet, h2, N, K, P) {
 
 
 h2_grid <- c( 0.15, 0.25, 0.35, 0.45, 0.55, 0.65)
-P_grid <- c(0.5,0.75) # how many percent is P from K
+P_grid <- c(1) # how many percent is P from K
 K_grid <- c(0.05, 0.02, 0.01)
-
+nSims <- 100
 
 #Read the genetic data
 
 #d1 <- read_plink("/Users/admin/Documents/plotLSH/simREML")
-d1 <- read_plink("/home/svenerik.ojavee/LSH_sim/simM10k_N25k")
+d1 <- read_plink("/mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k")
 #scale
 X_mat <- scale(t(d1$X))
 
@@ -98,13 +102,25 @@ X_mat <- scale(t(d1$X))
 for (h2_val in h2_grid) {
     print(h2_val)
     for (K_val in K_grid) {
+      print(K_val)
       for (P_val in P_grid) {
+        print(P_val)
         P_use <- K_val * P_val
+        for(n in 1:nSims){
+          boolFalse <- F
+          whileIts <- -1
+          while(boolFalse == F)
+          {
+            whileIts <- whileIts + 1
+          tryCatch({
+          samp_val <- simulateFunction_SNP(X_mat, h2_val, N, K_val, P_use, n + 100 * whileIts)
+          boolFalse<-T
+          },error=function(e){
+          },finally={})}
 
-          #Generate the data
-          samp_val <- simulateFunction_SNP(X_mat, h2_val, N, K_val, P_use)
-          fwrite(samp_val,file="/home/svenerik.ojavee/LSH_sim/tmp.phen",sep=" ",col.names=F)
-         system(paste0("/data/software/gcta_1.93.3beta2/gcta64 --grm simM10k_N75k --keep tmp.phen --pheno tmp.phen --reml --threads 20 --out /home/svenerik.ojavee/LSH_sim/resDir/res_",h2_val,"_",K_val,"_",P_val))
+          fwrite(samp_val,file=paste0("/mnt/beegfs/robingrp/sojavee/LSHResults/s",n,"_M10k_N20k_h",h2_val,"_K",K_val,"_P",P_val,".phen"),sep=" ",col.names=F)
+        }
+          
       }
     }
 }

@@ -1,3 +1,3 @@
 
 
-/data/software/gcta_1.93.3beta2/gcta64 --bfile /home/svenerik.ojavee/LSH_sim/simM10k_N75k --make-grm --out /home/svenerik.ojavee/LSH_sim/simM10k_N75k --thread-num 10
+/nfs/scistore13/robingrp/sojavee/gcta64 --bfile /mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k --make-grm --out /mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k --thread-num 5

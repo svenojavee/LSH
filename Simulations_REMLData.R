@@ -4,12 +4,12 @@ library(genio)
 
 
 M <- 10000
-NTilde <- 26000 #Generate 22500 individuals
+NTilde <- 20700 #Generate (20540 should be enough for K=0.05 and P=0.025 - worst case sim scenario)
 
-    mafs <- runif(M, 0.05, 0.5)
-    X_vec <- rbinom(NTilde * M, 2, prob = rep(mafs, NTilde))
-    X_unscaled <- (matrix(X_vec,nrow=M))
+mafs <- runif(M, 0.05, 0.5)
+X_vec <- rbinom(NTilde * M, 2, prob = rep(mafs, NTilde))
+X_unscaled <- (matrix(X_vec,nrow=M))
 
-write_plink(file="/home/svenerik.ojavee/LSH_sim/simM10k_N75k",X_unscaled)
+write_plink(file="/mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k",X_unscaled)
 
 
