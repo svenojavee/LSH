@@ -32,16 +32,8 @@ newFormula <- function(h2Obs,K){
   return(xx)
 }
 
-
-classicFormula(0.091668,0.05,0.0375)
-newFormula(0.091668,0.0375)
-
-#M <- 10000
 N <- 20000
 
-tmp1 <- function(sigG,sigE){
-  return(sigG/(sigG+sigE))
-}
 
 
 simulateFunction_SNP <- function(dataSet, h2, N, K, P,seedUse) {
@@ -87,13 +79,12 @@ simulateFunction_SNP <- function(dataSet, h2, N, K, P,seedUse) {
 
 
 h2_grid <- c( 0.15, 0.25, 0.35, 0.45, 0.55, 0.65)
-P_grid <- c(1) # how many percent is P from K
+P_grid <- c(0.5,0.75,0.9,0.95,1) # how many percent is P from K
 K_grid <- c(0.05, 0.02, 0.01)
 nSims <- 100
 
 #Read the genetic data
 
-#d1 <- read_plink("/Users/admin/Documents/plotLSH/simREML")
 d1 <- read_plink("/mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k")
 #scale
 X_mat <- scale(t(d1$X))

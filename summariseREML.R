@@ -2,21 +2,20 @@ library(data.table)
 library(ggplot2)
 library(ggsci)
 
-palette <- wes_palette("Darjeeling1", 2)
 
 
 classicFormula <- function(h2Obs, K, P) {
     return(h2Obs * (K * (1-K))**2 /(dnorm(qnorm(K)))**2 /(P*(1-P)) )
 }
 
-newFormula <- function(h2Obs,K){
+newFormula <- function(h2Obs,K, precision = 0.00001, convergenceSteps = 100){
   t <- qnorm(1-K)
   z <- dnorm(t)
   xx <- h2Obs
   a1 <- 0
   a2 <- 1
   it <- 1
-  while(abs(a2-a1) > 0.00001){
+  while(abs(a2-a1) > precision){
     it <- it+1
     res <- (xx*z**2)/(xx*z**2 + 1-K - pbivnorm::pbivnorm(t,t,xx))  - h2Obs
     if(res < 0){ #Find the solution from between xx and a2
@@ -27,8 +26,8 @@ newFormula <- function(h2Obs,K){
       a2 <- xx
       xx <- 0.5*(a1 + xx)
     }
-    if(it > 100){
-      print("Has not converged in 100 steps")
+    if(it > convergenceSteps){
+      print(paste0("Has not converged in ",convergenceSteps," steps"))
       return(xx)
     }
   }
@@ -85,8 +84,8 @@ datLongUnique[,h_format:=paste0("h2 = ",h2)]
 p <- ggplot(data=datLongUnique,aes(x=h2,y=meanValue,col=variable,fill=variable)) + facet_wrap(~as.character(K)+as.character(P)) + 
     geom_line() + geom_ribbon(aes(ymin = ylow, ymax = yhigh), alpha = 0.1) + geom_abline(intercept=0,slope=1,lty=2)
 
-
-p_mse <- ggplot(dat = datLongUnique, aes(x = P_perc, y = mse, color = variable)) + geom_line() + facet_grid(K_format ~ h_format)+
+datLongUnique[,rmse:=sqrt(mse)]
+p_mse <- ggplot(dat = datLongUnique, aes(x = P_perc, y = rmse, color = variable)) + geom_line() + facet_grid(K_format ~ h_format)+
     theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.spacing = unit(0.2, 'cm')) +
     theme(legend.title = element_blank(), legend.text = element_text(size = 14), legend.key.size = unit(0.5, 'cm'), legend.spacing.x = unit(0.2, 'cm')) +
     theme(title = element_text(color = "gray20", size = 14)) +
@@ -95,9 +94,9 @@ p_mse <- ggplot(dat = datLongUnique, aes(x = P_perc, y = mse, color = variable))
     theme(legend.position = "top") +
     theme(strip.background = element_rect(fill = "white")) +
     theme(strip.text = element_text(size = 14, color = "gray10")) +
-    xlab("Sample prevalence (% of population prevalence)") + ylab("MSE") + scale_x_continuous(trans='log10') +
+    xlab("Sample prevalence (% of population prevalence)") + ylab("RMSE") + scale_x_continuous(trans='log10') +
     scale_color_lancet()
 
 
-ggsave(filename="/nfs/scistore13/robingrp/sojavee/LSH/remlPlot_mse.pdf",plot=p_mse,width=10,height=5)
+ggsave(filename="/nfs/scistore13/robingrp/sojavee/LSH/remlPlot_rmse.pdf",plot=p_mse,width=10,height=5)
 
