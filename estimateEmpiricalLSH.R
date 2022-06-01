@@ -31,6 +31,37 @@ newFormula <- function(h2Obs,K){
 }
 
 
+LSH_ascertain <- function(h2Obs,P,K){
+  tP <- qnorm(P)
+  tK <- qnorm(K)
+  z <- dnorm(tK)
+  xx <- h2Obs
+  a1 <- 0
+  a2 <- 1
+  it <- 1
+  while(abs(a2-a1) > 0.00000001){
+    it <- it+1
+    res <- h2Obs * (xx * z**2 + K - pbivnorm::pbivnorm(tK,tK,xx))**2 / z**2 * (1/(P*(1-P))) - xx
+    
+    if(res > 0){ #Find the solution from between xx and a2
+      a1 <- xx
+      xx <- 0.5*(a2 + xx)
+    }
+    if(res < 0){
+      a2 <- xx
+      xx <- 0.5*(a1 + xx)
+    }
+    if(it > 100){
+      print("Has not converged in 100 steps")
+      return(xx)
+    }
+  }
+
+  return(xx)
+}
+
+
+
 h2Dat <- fread("/nfs/scistore13/robingrp/sojavee/LSH/h2_results.csv")
 prevDat <- fread("/nfs/scistore13/robingrp/sojavee/LSH/Prevalences.csv")
 prevDat[,PopulationPrevalence:=PopulationPrevalence/100]
@@ -44,7 +75,12 @@ datLong[,LSH_classicCompare:=classicFormula(value,SamplePrevalence,SamplePrevale
 
 datLong[,LSH_new:=0]
 for(i in 1:nrow(datLong)){
-    datLong$LSH_new[i] <- newFormula(datLong$value[i],datLong$SamplePrevalence[i])
+    if(datLong$PopulationPrevalence[i] == datLong$SamplePrevalence[i]){
+      print(datLong$Disease[i])
+      datLong$LSH_new[i] <- newFormula(datLong$value[i],datLong$PopulationPrevalence[i])
+    }else{
+      datLong$LSH_new[i] <- LSH_ascertain(datLong$value[i],datLong$SamplePrevalence[i],datLong$PopulationPrevalence[i])
+    }
 }
 
 
@@ -66,9 +102,15 @@ classic2Dat[,valPresent:=paste0(h2," (",lCI,", ",uCI,")")]
 
 
 plotData <- merge(classic2Dat[,list(Code,Disease,h2,lCI,uCI)],newDat[,list(Code,Disease,h2,lCI,uCI)],by=c("Code","Disease"))
-
+plotData <- plotData[!(Code %in% c("F20","F42","F33")),]
 library(ggplot2)
 require("ggrepel")
+
+plotData[,list(Code,h2.x,lCI.x,uCI.x,h2.y,lCI.y,uCI.y)]
+#plotData[,prMode:=paste0(h2.y," (",lCI.y,", ",uCI.y,")")]
+plotData[,ciClassic:=uCI.x-lCI.x]
+plotData[,ciNew:=uCI.y-lCI.y]
+plotData[,CIreduction:=round(100*(ciClassic-ciNew)/ciClassic)]
 
 p <- ggplot(data=plotData,aes(x=h2.x,y=h2.y,label=Disease))  + geom_text_repel()  +
     geom_errorbarh(aes(xmax = uCI.x, xmin = lCI.x),alpha=0.3) + geom_errorbar(aes(ymax = uCI.y, ymin = lCI.y),alpha=0.3)  + geom_point(col=2)+
@@ -82,4 +124,4 @@ p <- ggplot(data=plotData,aes(x=h2.x,y=h2.y,label=Disease))  + geom_text_repel()
     theme(strip.text = element_text(size = 8, color = "gray10")) +
     xlab("Previous estimate") + ylab("New estimate")  +  geom_abline(intercept = 0, slope = 1,lty=3)
 
-ggsave(p,filename="/nfs/scistore13/robingrp/sojavee/LSH/RealDataCompare.pdf",width=6,height=5)
+ggsave(p,filename="/nfs/scistore13/robingrp/sojavee/figures/RealDataCompare.pdf",width=6,height=5)

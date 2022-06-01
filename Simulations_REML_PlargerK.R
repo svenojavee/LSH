@@ -2,6 +2,8 @@ library(data.table)
 library(genio)
 
 
+#Here we use the new formula that could also take into account ascertainment
+
 classicFormula <- function(h2Obs, K, P) {
     return(h2Obs * (K * (1-K))**2 /(dnorm(qnorm(K)))**2 /(P*(1-P)) )
 }
@@ -33,8 +35,6 @@ newFormula <- function(h2Obs,K){
 }
 
 N <- 20000
-
-
 
 simulateFunction_SNP <- function(dataSet, h2, N, K, P,seedUse) {
   set.seed(seedUse)
@@ -79,13 +79,13 @@ simulateFunction_SNP <- function(dataSet, h2, N, K, P,seedUse) {
 
 
 h2_grid <- c( 0.15, 0.25, 0.35, 0.45, 0.55, 0.65)
-P_grid <- 0.25 #c(0.5,0.75,0.9,1) # how many percent is P from K  #0.95
-K_grid <- c( 0.02, 0.01, 0.005) # 0.05,
+P_grid <- 0.25 #c(1.25,1.5,2,4) # how many percent is P from K   #0.5,0.75,0.9,0.95,1
+K_grid <- 0.05 #c(0.05, 0.02, 0.01,0.005)
 nSims <- 100
 
 #Read the genetic data
 
-d1 <- read_plink("/mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k")
+d1 <- read_plink("/mnt/beegfs/robingrp/sojavee/LSHResults/simM10k_N20k_NT90k")
 #scale
 X_mat <- scale(t(d1$X))
 
